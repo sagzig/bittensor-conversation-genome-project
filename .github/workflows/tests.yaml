@@ -1,0 +1,45 @@
+name: Tests
+
+on: [push, workflow_dispatch]
+
+defaults:
+  run:
+    shell: bash -el {0}
+
+jobs:
+  unittest-job:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: conda-environment.yaml
+          environment-name: genome
+          cache-env: true
+          cache-downloads: true
+      
+      - name: Run Tests
+        run: |
+          micromamba activate genome
+          pip install -r requirements.txt
+          pytest tests/
+        env:
+          SYSTEM_MODE: production
+          WAND_ENABLED: 1
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+          WANDB_STAGENET_PROJECT: cgp_stagenet
+          WANDB_TESTNET_PROJECT: cgp_testnet
+          WANDB_MAINNET_PROJECT: cgp_mainnet
+          CGP_API_READ_HOST: https://api.conversations.xyz
+          CGP_API_WRITE_HOST: https://db.conversations.xyz
+          CGP_API_READ_PORT: 443
+          CGP_API_WRITE_PORT: 443
+          LLM_TYPE: openai
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_DIRECT_CALL: 1
+          OPENAI_MODEL: gpt-3.5-turbo
+          OPENAI_EMBEDDINGS_MODEL: text-embedding-ada-002
