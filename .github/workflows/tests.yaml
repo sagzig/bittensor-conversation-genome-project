@@ -37,7 +37,7 @@ jobs:
       - name: Run Tests
         run: |
           source venv/bin/activate
-          pytest tests/
+          ./run_test.sh 
         env:
           SYSTEM_MODE: production
           WAND_ENABLED: 1
