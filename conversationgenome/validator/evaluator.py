@@ -19,6 +19,7 @@ from conversationgenome.utils.Utils import Utils
 from conversationgenome.ConfigLib import c
 
 from conversationgenome.mock.MockBt import MockBt
+from conversationgenome.analytics.PrometheusLib import instrument
 
 bt = None
 try:
@@ -41,6 +42,7 @@ class Evaluator:
     }
 
     # Tag all the vectors from all the tags and return set of vectors defining the neighborhood
+    @instrument
     async def calculate_semantic_neighborhood(self, conversation_metadata, tag_count_ceiling=None):
         all_vectors = []
         count = 0
@@ -61,7 +63,8 @@ class Evaluator:
             return neighborhood_vectors
         else:
             return None
-
+        
+    @instrument
     def score_vector_similarity(self, neighborhood_vectors, individual_vectors, tag=None):
         similarity_score = 0
         # Calculate the similarity score between the neighborhood_vectors and the individual_vectors
@@ -80,6 +83,7 @@ class Evaluator:
             Utils.append_log(log_path, f"Evaluator Tag '{tag}' similarity score: {similarity_score}")
         return similarity_score
 
+    @instrument
     async def calculate_penalty(self, uid, score, num_tags, num_unique_tags, min_score, max_score):
         final_score = score
         num_both_tags = num_tags - num_unique_tags
@@ -112,7 +116,7 @@ class Evaluator:
 
         return final_score
 
-
+    @instrument
     async def evaluate(self, full_convo_metadata=None, miner_responses=None, body=None, exampleList=None, verbose=None, scoring_factors=None):
         if verbose == None:
             verbose = self.verbose

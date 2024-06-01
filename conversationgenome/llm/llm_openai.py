@@ -3,6 +3,7 @@ import json
 
 from conversationgenome.utils.Utils import Utils
 from conversationgenome.ConfigLib import c
+from conversationgenome.analytics.PrometheusLib import instrument
 
 
 openai = None
@@ -52,6 +53,7 @@ class llm_openai:
 
     # OpenAI Python library dependencies can conflict with other packages. Allow
     # direct call to API to bypass issues.
+    
     def do_direct_call(self, data, url_path = "/v1/chat/completions"):
         url = self.root_url + url_path
         headers = {
@@ -67,7 +69,8 @@ class llm_openai:
             print("response", response)
 
         return response
-
+    
+    @instrument
     def generate_convo_xml(self, convo):
         xml = "<conversation id='%d'>" % (83945)
         #print("CONVO OPENAI", convo)
@@ -85,7 +88,7 @@ class llm_openai:
         xml += "</conversation>"
         return (xml, participants)
 
-
+    @instrument
     def process_json_tag_return(self, response):
         if type(response) == str:
             try:
@@ -115,7 +118,7 @@ class llm_openai:
         tags = list(tag_list.keys())
         return tags
 
-
+    @instrument
     async def conversation_to_metadata(self,  convo):
         (xml, participants) = self.generate_convo_xml(convo)
         tags = None
@@ -294,7 +297,7 @@ class llm_openai:
             out = completion['json']['choices'][0]['message']['content']
         return out
 
-
+    @instrument
     async def openai_prompt_call_csv(self, convoXmlStr=None, participants=None):
         direct_call = Utils._int(c.get('env', "OPENAI_DIRECT_CALL"))
         prompt1 = 'Analyze conversation in terms of topic interests of the participants. Analyze the conversation (provided in structured XML format) where <p0> has the questions and <p1> has the answers . Return comma-delimited tags.  Only return the tags without any English commentary.'
@@ -357,7 +360,8 @@ class llm_openai:
         #print(funcs)
         #print(funcs['location'])
         return funcs
-
+    
+    @instrument
     async def call_llm_tag_function(self, convoXmlStr=None, participants=None, call_type="csv"):
         out = {}
         direct_call = c.get('env', "OPENAI_DIRECT_CALL")

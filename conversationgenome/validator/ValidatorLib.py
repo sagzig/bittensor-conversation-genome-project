@@ -15,6 +15,7 @@ from conversationgenome.miner.MinerLib import MinerLib
 from conversationgenome.conversation.ConvoLib import ConvoLib
 from conversationgenome.llm.LlmLib import LlmLib
 from conversationgenome.mock.MockBt import MockBt
+from conversationgenome.analytics.PrometheusLib import instrument
 
 bt = None
 try:
@@ -137,6 +138,7 @@ class ValidatorLib:
             bt.logging.error(f"ERROR:9879432: No conversation returned from API. Aborting.")
         return None
 
+    @instrument
     async def getConvo(self):
         hotkey = self.hotkey
         cl = ConvoLib()
@@ -148,7 +150,7 @@ class ValidatorLib:
         convo = await cl.put_conversation(hotkey, c_guid, data, type=type, batch_num=batch_num, window=window)
         return convo
 
-
+    @instrument
     def getConvoWindows(self, fullConvo):
         minLines = c.get("convo_window", "min_lines", 5)
         maxLines = c.get("convo_window", "max_lines", 10)
@@ -162,7 +164,7 @@ class ValidatorLib:
         return windows
 
 
-
+    @instrument
     async def generate_full_convo_metadata(self, convo):
         if self.verbose:
             bt.logging.info(f"Execute generate_full_convo_metadata for participants {convo['participants']}")
@@ -187,6 +189,7 @@ class ValidatorLib:
         }
         return data
 
+    @instrument
     async def send_to_miners(self, conversation_guid, window_idx, conversation_window, miner_uids):
         bt.logging.info(f"Send to conversation {conversation_guid} / {window_idx} to miners: {miner_uids}")
         results = []

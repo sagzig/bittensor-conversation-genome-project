@@ -37,20 +37,25 @@ from conversationgenome.validator.ValidatorLib import ValidatorLib
 from conversationgenome.validator.evaluator import Evaluator
 
 from conversationgenome.protocol import CgSynapse
+from conversationgenome.analytics.PrometheusLib import PrometheusMetrics, instrument, initialize_metrics
+
+
+
+
 
 class Validator(BaseValidatorNeuron):
     verbose = False
     """
     Keeping a moving average of the scores of the miners and using them to set weights at the end of each epoch. Additionally, the scores are reset for new hotkeys at the end of each epoch.
     """
-
     def __init__(self, config=None):
         super(Validator, self).__init__(config=config)
         c.set("system", "netuid", self.config.netuid)
-
+    
         bt.logging.info("load_state()")
         self.load_state()
 
+    @instrument
     async def forward(self, test_mode=False):
         try:
             wl = WandbLib()
@@ -191,6 +196,7 @@ class Validator(BaseValidatorNeuron):
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
     wl = WandbLib()
+    pm = PrometheusMetrics()
     try:
         wl.init_wandb()
     except Exception as e:
@@ -198,6 +204,10 @@ if __name__ == "__main__":
 
     try:
         with Validator() as validator:
+            try:
+                pm.initialize_metrics(validator.config)
+            except Exception as e:
+                print(f"ERROR 2294376 -- Metrics init error: {e}")
             while True:
                 bt.logging.info("CGP Validator running...", time.time())
                 time.sleep(5)
